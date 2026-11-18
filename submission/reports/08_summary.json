@@ -1,0 +1,18 @@
+{
+  "verdict": {
+    "decision": "Release",
+    "n_errors": 0,
+    "n_warn_images": 16,
+    "n_images": 203,
+    "warn_ratio": 0.0788,
+    "reasons": [
+      "Đạt chuẩn xuất xưởng: không còn lỗi bắt buộc, tỉ lệ cảnh báo 7.88% (16/203 ảnh) dưới ngưỡng (10.00%)."
+    ]
+  },
+  "reviewed": 80,
+  "budget": 80,
+  "seconds": 10.1,
+  "exported": "C:\\AI thuc chien\\Lab 9\\K5-L23-DAY09-2A202603035-AutoQCPipeline\\submission\\export\\clean_v1",
+  "config_sha1": "74f1ab39bb2745c51ad171940d3c915aec7c632b",
+  "review_sim_sha1": "7988ca22827f780a7043a2300490e679a1697154"
+}
