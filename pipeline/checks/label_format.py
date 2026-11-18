@@ -21,25 +21,7 @@ Gợi ý
 - `iou_xywh(a, b)` có sẵn trong common.py.
 - Ngưỡng nằm trong `cfg["label_format"]` — đừng viết cứng số vào code.
 """
-"""CHECK 2 — Dòng nhãn YOLO: sai định dạng, ID lớp lạ, box tràn ảnh, box rỗng, box lặp.   (Script 2 trong slide)   ★★
-
-Test:  pytest tests/test_label_format.py -q
-
-Mỗi dòng nhãn: `id cx cy w h` (5 số, toạ độ 0–1). Trả về list[Issue]; `Issue.line` = số dòng (đếm từ 1).
-
-| code             | severity | khi nào                                                                  |
-|------------------|----------|--------------------------------------------------------------------------|
-| BAD_FORMAT       | ERROR    | không đúng 5 cột số (dùng `parse_yolo_line`, bắt `ValueError`)           |
-| BAD_CLASS_ID     | ERROR    | id lớp ngoài 0..len(ds.classes)-1                                        |
-| BOX_ZERO         | ERROR    | w <= 0 hoặc h <= 0                                                       |
-| BOX_OUT_OF_IMAGE | ERROR    | mép box vượt [0,1] quá `cfg["label_format"]["overflow_tol"]`; extra={"overflow": mức tràn} |
-| DUP_BOX          | ERROR    | cùng lớp với một dòng TRƯỚC ĐÓ và IoU > `dup_box_iou`; báo ở dòng SAU    |
-| BOX_TINY         | WARN     | cạnh ngắn của box (px) < `min_box_px`  (cần `ds.image_size(stem)`)       |
-| BOX_HUGE         | WARN     | w*h > `max_box_frac`                                                     |
-"""
 from ..common import ERROR, WARN, Issue, iou_xywh, parse_yolo_line
-
-
 def run(ds, cfg):
     issues = []
     
@@ -50,7 +32,6 @@ def run(ds, cfg):
     max_box_frac = c_fmt.get("max_box_frac", 0.95)
     dup_box_iou = c_fmt.get("dup_box_iou", 0.9)
     num_classes = len(ds.classes)
-
     # 2. Duyệt qua từng file nhãn của dataset
     for lf in ds.label_files():
         stem = lf.stem
@@ -63,7 +44,6 @@ def run(ds, cfg):
         
         # Danh sách lưu các box hợp lệ phía trước trong cùng ảnh để kiểm DUP_BOX: (cls_id, (cx, cy, w, h))
         prev_boxes = []
-
         # 3. Duyệt từng dòng nhãn (line_idx là số dòng gốc đếm từ 1, đã bỏ dòng trống)
         for line_idx, text in raw_lines:
             # 3.1. Kiểm tra định dạng 5 cột số
@@ -74,21 +54,18 @@ def run(ds, cfg):
                     Issue("label_format", ERROR, "BAD_FORMAT", stem, f"sai định dạng: {e}", line=line_idx)
                 )
                 continue  # Dòng hỏng cú pháp thì bỏ qua, không kiểm tiếp hình học
-
             # 3.2. Kiểm tra ID lớp hợp lệ (0 .. num_classes - 1)
             if cls_id < 0 or cls_id >= num_classes:
                 issues.append(
                     Issue("label_format", ERROR, "BAD_CLASS_ID", stem, f"id lớp {cls_id} không hợp lệ", line=line_idx)
                 )
                 continue
-
             # 3.3. Kiểm tra box rỗng / kích thước không dương
             if w <= 0 or h <= 0:
                 issues.append(
                     Issue("label_format", ERROR, "BOX_ZERO", stem, f"kích thước không dương: w={w}, h={h}", line=line_idx)
                 )
                 continue
-
             # 3.4. Kiểm tra mép box tràn ra ngoài ảnh [0, 1]
             x1 = cx - w / 2.0
             y1 = cy - h / 2.0
@@ -107,7 +84,6 @@ def run(ds, cfg):
                         extra={"overflow": overflow},
                     )
                 )
-
             # 3.5. Kiểm tra trùng lặp box (DUP_BOX) với các dòng trước đó trong cùng ảnh
             curr_box = (cx, cy, w, h)
             dup_found = False
@@ -128,7 +104,6 @@ def run(ds, cfg):
             
             # Lưu box vào danh sách để kiểm tra cho các dòng tiếp theo
             prev_boxes.append((cls_id, curr_box))
-
             # 3.6. Cảnh báo BOX_TINY (cạnh ngắn tính theo pixel nhỏ hơn min_box_px)
             if img_size is not None:
                 img_w, img_h = img_size
@@ -144,7 +119,6 @@ def run(ds, cfg):
                             line=line_idx,
                         )
                     )
-
             # 3.7. Cảnh báo BOX_HUGE (diện tích w * h chiếm quá tỉ lệ max_box_frac)
             if w * h > max_box_frac:
                 issues.append(
@@ -157,5 +131,4 @@ def run(ds, cfg):
                         line=line_idx,
                     )
                 )
-
     return issues
